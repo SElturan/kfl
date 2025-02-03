@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Teams, Players, Matches, EventsMathes, StaticticsPlayerSeason, Standings
+from .models import Teams, Players, Matches, EventsMathes, StaticticsPlayerSeason, Standings, SiteSettings, News, BestMoments
 
 @admin.register(Teams)
 class TeamsAdmin(admin.ModelAdmin):
@@ -36,3 +36,20 @@ class StandingsAdmin(admin.ModelAdmin):
     list_display = ('team', 'season', 'games', 'wins', 'draws', 'losses', 'points')
     search_fields = ('team__name', 'season')
     list_filter = ('season',)
+
+@admin.register(SiteSettings)
+class SiteSettingsAdmin(admin.ModelAdmin):
+    list_display = ('logo', 'favicon', )
+
+
+@admin.register(News)
+class NewsAdmin(admin.ModelAdmin):
+    list_display = ('title', 'date', 'date')
+    search_fields = ('title',)
+    list_filter = ('date',)
+
+@admin.register(BestMoments)
+class BestMomentsAdmin(admin.ModelAdmin):
+    list_display = ('title', 'date', )
+    search_fields = ('title', )
+    list_filter = ('date',)

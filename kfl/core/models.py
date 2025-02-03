@@ -72,6 +72,7 @@ class Matches(models.Model):
         verbose_name = 'Матч'
         verbose_name_plural = 'Матчи'
 
+
 class EventsMathes(models.Model):
 
     class EventChoices(models.TextChoices):
@@ -138,3 +139,50 @@ class Standings(models.Model):
     class Meta:
         verbose_name = 'Турнирная таблица'
         verbose_name_plural = 'Турнирные таблицы'
+
+
+class SiteSettings(models.Model):
+    logo = models.ImageField(upload_to='site_logo/', verbose_name="Логотип", null=True, blank=True)
+    favicon = models.ImageField(upload_to='site_favicon/', verbose_name="Фавикон", null=True, blank=True)
+    title = models.CharField(max_length=255, verbose_name="Заголовок страницы", null=True, blank=True)
+    facebook_link = models.URLField(verbose_name="Facebook", null=True, blank=True)
+    instagram_link = models.URLField(verbose_name="Instagram", null=True, blank=True)
+    tiktok_link = models.URLField(verbose_name="TikTok", null=True, blank=True)
+    youtube_link = models.URLField(verbose_name="YouTube", null=True, blank=True)
+    copy_right = models.CharField(max_length=255, verbose_name="Копирайт", null=True, blank=True)
+
+    def __str__(self):
+        return self.site_name
+
+    class Meta:
+        verbose_name = "Настройки сайта"
+        verbose_name_plural = "Настройки сайта"
+
+
+class News(models.Model):
+    title = models.CharField(max_length=100, verbose_name='Заголовок')
+    text = models.TextField(verbose_name='Текст')
+    image = models.ImageField(upload_to='news/', verbose_name='Изображение',null=True, blank=True)
+    date = models.DateField(verbose_name='Дата')
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = 'Новость'
+        verbose_name_plural = 'Новости'
+
+
+class BestMoments(models.Model):
+    title = models.CharField(max_length=100, verbose_name='Заголовок')
+    description = models.TextField(verbose_name='Текст')
+    link_moments = models.URLField(verbose_name="Лучшие моменты", null=True, blank=True)
+    date = models.DateField(verbose_name='Дата')
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = 'Лучшие моменты'
+        verbose_name_plural = 'Лучшие моменты'
+
