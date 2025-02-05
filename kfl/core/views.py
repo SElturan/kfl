@@ -113,3 +113,9 @@ class SiteDataAPIView(APIView):
         }
 
         return Response(response_data)
+
+
+class NewsListView(ListAPIView):
+    queryset = News.objects.all()
+    serializer_class = NewsSerializer
+    

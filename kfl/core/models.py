@@ -152,7 +152,7 @@ class SiteSettings(models.Model):
     copy_right = models.CharField(max_length=255, verbose_name="Копирайт", null=True, blank=True)
 
     def __str__(self):
-        return self.site_name
+        return self.title
 
     class Meta:
         verbose_name = "Настройки сайта"

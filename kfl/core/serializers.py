@@ -4,7 +4,7 @@ from .models import Teams, Players, Standings, Matches, EventsMathes, Statictics
 class TeamsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Teams
-        fields = ['id', 'name', 'city', 'stadium', 'coach', 'founded_year']
+        fields = ['id', 'logo','name', 'city', 'stadium', 'coach', 'founded_year']
 
 
 class PlayersSerializer(serializers.ModelSerializer):
@@ -51,11 +51,13 @@ class EventsMathesSerializer(serializers.ModelSerializer):
 class PlayerDetailSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     team_name = serializers.CharField(source="team.name")
+    team_id = serializers.IntegerField(source="team.id")
+    team_logo = serializers.CharField(source="team.logo")
 
     class Meta:
         model = Players
         fields = [
-            "id", "full_name", "team_name", "photo", "birth_date", "position", "number",
+            "id", "full_name", "team_name", "team_id", "team_logo","photo", "birth_date", "position", "number",
             "height", "weight", "nationality", "goals", "assists", "yellow_cards",
             "red_cards", "games", "minutes"
         ]

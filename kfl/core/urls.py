@@ -1,5 +1,6 @@
 from django.urls import path
-from .views import TeamsListView, TeamPlayersView, StandingsListView, MatchesByTeamView, MatchesListView, MatchEventsListView, PlayerDetailView, SiteDataAPIView
+from .views import TeamsListView, TeamPlayersView, StandingsListView, MatchesByTeamView, MatchesListView, MatchEventsListView, PlayerDetailView, \
+SiteDataAPIView, NewsListView
 
 urlpatterns = [
     path('api/teams/', TeamsListView.as_view(), name='teams-list'),
