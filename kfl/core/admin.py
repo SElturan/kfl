@@ -1,55 +1,108 @@
 from django.contrib import admin
-from .models import Teams, Players, Matches, EventsMathes, StaticticsPlayerSeason, Standings, SiteSettings, News, BestMoments
+from .models import Teams, Management, Players, Season, Tournament, Round, Matches, MatchLineup, EventsMathes, StaticticsPlayerSeason, SeasonAwards, Standings, SiteSettings, News, BestMoments
 
-@admin.register(Teams)
+# Для модели Teams
 class TeamsAdmin(admin.ModelAdmin):
-    list_display = ('name', 'city', 'stadium', 'coach', 'founded_year')
-    search_fields = ('name', 'city', 'coach')
-    list_filter = ('founded_year',)
+    list_display = ('id','name', 'city', 'stadium', 'coach', 'founded_year')
+    search_fields = ('name', 'city')
+    list_filter = ('city',)
 
-@admin.register(Players)
+# Для модели Management
+class ManagementAdmin(admin.ModelAdmin):
+    list_display = ('id','first_name', 'last_name', 'position', 'team')
+    search_fields = ('first_name', 'last_name', 'position')
+    list_filter = ('position',)
+
+# Для модели Players
 class PlayersAdmin(admin.ModelAdmin):
-    list_display = ('first_name', 'last_name', 'team', 'position', 'number', 'nationality', 'goals', 'assists')
-    search_fields = ('first_name', 'last_name', 'team__name', 'position')
-    list_filter = ('team', 'position', 'nationality')
+    list_display = ('id','first_name', 'last_name', 'team', 'position', 'number', 'games', 'goals', 'assists', 'yellow_cards', 'red_cards')
+    search_fields = ('first_name', 'last_name', 'team__name')
+    list_filter = ('team', 'position', 'games', 'goals', 'yellow_cards')
 
-@admin.register(Matches)
+# Для модели Season
+class SeasonAdmin(admin.ModelAdmin):
+    list_display = ('id','year', 'is_current', 'start_date', 'end_date')
+    search_fields = ('year',)
+    list_filter = ('is_current',)
+
+# Для модели Tournament
+class TournamentAdmin(admin.ModelAdmin):
+    list_display = ('id','name', 'season', 'country')
+    search_fields = ('name', 'season__year', 'country')
+    list_filter = ('season',)
+
+# Для модели Round
+class RoundAdmin(admin.ModelAdmin):
+    list_display = ('id','tournament', 'season', 'round_number')
+    search_fields = ('tournament__name', 'season__year')
+    list_filter = ('tournament', 'season')
+
+# Для модели Matches
 class MatchesAdmin(admin.ModelAdmin):
-    list_display = ('home_team', 'away_team', 'date_match', 'home_goals', 'away_goals', 'status')
-    search_fields = ('home_team__name', 'away_team__name', 'stadium')
-    list_filter = ('status', 'date_match')
+    list_display = ('id','tournament', 'season', 'home_team', 'away_team', 'date_match', 'status', 'home_goals', 'away_goals', 'stadium')
+    search_fields = ('tournament__name', 'home_team__name', 'away_team__name')
+    list_filter = ('tournament', 'season', 'status', 'home_team', 'away_team')
 
-@admin.register(EventsMathes)
+# Для модели MatchLineup
+class MatchLineupAdmin(admin.ModelAdmin):
+    list_display = ('id','match', 'team', 'player', 'is_starting', 'is_substitute')
+    search_fields = ('match__tournament__name', 'player__first_name', 'player__last_name')
+    list_filter = ('match', 'team', 'is_starting', 'is_substitute')
+
+# Для модели EventsMathes
 class EventsMathesAdmin(admin.ModelAdmin):
-    list_display = ('match', 'player', 'event', 'time')
-    search_fields = ('match__home_team__name', 'match__away_team__name', 'player__first_name', 'player__last_name')
-    list_filter = ('event',)
+    list_display = ('id','match', 'player', 'event', 'time')
+    search_fields = ('match__tournament__name', 'player__first_name', 'player__last_name', 'event')
+    list_filter = ('match', 'event')
 
-@admin.register(StaticticsPlayerSeason)
+# Для модели StaticticsPlayerSeason
 class StaticticsPlayerSeasonAdmin(admin.ModelAdmin):
-    list_display = ('player', 'season', 'goals', 'assists', 'yellow_cards', 'red_cards')
-    search_fields = ('player__first_name', 'player__last_name', 'season')
-    list_filter = ('season',)
+    list_display = ('id','player', 'tournament', 'season', 'goals', 'assists', 'yellow_cards', 'red_cards', 'games', 'minutes')
+    search_fields = ('player__first_name', 'player__last_name', 'tournament__name', 'season__year')
+    list_filter = ('tournament', 'season')
 
-@admin.register(Standings)
+# Для модели SeasonAwards
+class SeasonAwardsAdmin(admin.ModelAdmin):
+    list_display = ('id','season', 'tournament', 'best_scorer', 'best_goalkeeper', 'best_coach', 'best_team', 'best_player')
+    search_fields = ('season__year', 'tournament__name')
+    list_filter = ('season', 'tournament')
+
+# Для модели Standings
 class StandingsAdmin(admin.ModelAdmin):
-    list_display = ('team', 'season', 'games', 'wins', 'draws', 'losses', 'points')
-    search_fields = ('team__name', 'season')
-    list_filter = ('season',)
+    list_display = ('id','team', 'tournament', 'season', 'games', 'wins', 'draws', 'losses', 'goals_scored', 'goals_conceded', 'goals_difference', 'points')
+    search_fields = ('team__name', 'tournament__name', 'season__year')
+    list_filter = ('tournament', 'season')
 
-@admin.register(SiteSettings)
+# Для модели SiteSettings
 class SiteSettingsAdmin(admin.ModelAdmin):
-    list_display = ('logo', 'favicon', )
-
-
-@admin.register(News)
-class NewsAdmin(admin.ModelAdmin):
-    list_display = ('title', 'date', 'date')
+    list_display = ('id','title', 'logo', 'favicon', 'facebook_link', 'instagram_link', 'tiktok_link', 'youtube_link', 'copy_right')
     search_fields = ('title',)
+
+# Для модели News
+class NewsAdmin(admin.ModelAdmin):
+    list_display = ('id','title', 'date', 'image')
+    search_fields = ('title', 'text')
     list_filter = ('date',)
 
-@admin.register(BestMoments)
+# Для модели BestMoments
 class BestMomentsAdmin(admin.ModelAdmin):
-    list_display = ('title', 'date', )
-    search_fields = ('title', )
+    list_display = ('id','title', 'description', 'link_moments', 'date')
+    search_fields = ('title', 'description')
     list_filter = ('date',)
+
+# Регистрируем модели
+admin.site.register(Teams, TeamsAdmin)
+admin.site.register(Management, ManagementAdmin)
+admin.site.register(Players, PlayersAdmin)
+admin.site.register(Season, SeasonAdmin)
+admin.site.register(Tournament, TournamentAdmin)
+admin.site.register(Round, RoundAdmin)
+admin.site.register(Matches, MatchesAdmin)
+admin.site.register(MatchLineup, MatchLineupAdmin)
+admin.site.register(EventsMathes, EventsMathesAdmin)
+admin.site.register(StaticticsPlayerSeason, StaticticsPlayerSeasonAdmin)
+admin.site.register(SeasonAwards, SeasonAwardsAdmin)
+admin.site.register(Standings, StandingsAdmin)
+admin.site.register(SiteSettings, SiteSettingsAdmin)
+admin.site.register(News, NewsAdmin)
+admin.site.register(BestMoments, BestMomentsAdmin)

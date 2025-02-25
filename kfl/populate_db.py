@@ -1,12 +1,12 @@
+from datetime import date
 import random
-from datetime import datetime, timedelta
 from faker import Faker
 from django.utils.timezone import make_aware
-from core.models import Teams, Players, Matches, Standings, StaticticsPlayerSeason
+from core.models import Teams, Players, Matches, Standings, StaticticsPlayerSeason, Season, Tournament  # Импорт Tournament
 
 fake = Faker()
 
-# Данные о командах
+# Данные о командах Кыргызстана
 teams_data = [
     ("Абдыш-Ата", 27, 22, 3, 2, 67, 15, 69),
     ("Дордой", 27, 17, 8, 2, 43, 18, 59),
@@ -20,12 +20,27 @@ teams_data = [
     ("Кыргызалтын", 27, 4, 8, 15, 19, 40, 20),
 ]
 
-# Очистка базы перед добавлением
+# Очистка базы перед добавлением новых данных
 Teams.objects.all().delete()
 Players.objects.all().delete()
 Matches.objects.all().delete()
 Standings.objects.all().delete()
 StaticticsPlayerSeason.objects.all().delete()
+
+# Создание сезона
+season_2024, created = Season.objects.get_or_create(
+    year=2024,
+    defaults={
+        'start_date': date(2024, 1, 1),
+        'end_date': date(2024, 12, 31),
+    }
+)
+
+# Создание турнира с указанием сезона
+tournament_2024, created = Tournament.objects.get_or_create(
+    name="Турнир 2024",  # Название турнира
+    season=season_2024  # Указываем сезон, связанный с турниром
+)
 
 # Создание команд
 teams = []
@@ -33,10 +48,11 @@ for name, games, wins, draws, losses, goals_scored, goals_conceded, points in te
     team = Teams.objects.create(name=name)
     teams.append(team)
 
-    # Добавление в турнирную таблицу
+    # Добавление команды в турнирную таблицу
     Standings.objects.create(
         team=team,
-        season="2024",
+        season=season_2024,
+        tournament=tournament_2024,  # Указываем турнир
         games=games,
         wins=wins,
         draws=draws,
@@ -46,57 +62,47 @@ for name, games, wins, draws, losses, goals_scored, goals_conceded, points in te
         points=points
     )
 
-# Создание игроков
-positions = ["Вратарь", "Защитник", "Полузащитник", "Нападающий"]
-for team in teams:
-    for _ in range(11):
-        player = Players.objects.create(
-            team=team,
-            first_name=fake.first_name(),
-            last_name=fake.last_name(),
-            birth_date=fake.date_of_birth(minimum_age=18, maximum_age=35),
-            position=random.choice(positions),
-            number=random.randint(1, 99),
-            height=random.randint(165, 200),
-            weight=random.randint(60, 100),
-            nationality=fake.country(),
-            goals=random.randint(0, 20),
-            assists=random.randint(0, 10),
-            yellow_cards=random.randint(0, 5),
-            red_cards=random.randint(0, 2),
-            games=random.randint(5, 27),
-            minutes=random.randint(100, 2500),
-        )
-
-        # Создание статистики игрока по сезонам
-        StaticticsPlayerSeason.objects.create(
-            player=player,
-            season="2024",
-            goals=player.goals,
-            assists=player.assists,
-            yellow_cards=player.yellow_cards,
-            red_cards=player.red_cards,
-            games=player.games,
-            minutes=player.minutes
-        )
-
-# Создание матчей (по 5 матчей для каждой команды)
-matches = []
-match_dates = [make_aware(datetime.now() - timedelta(days=i)) for i in range(1, 31, 5)]
+# Создание игроков с реалистичными позициями
+positions = {
+    "Вратарь": 2,
+    "Защитник": 5,
+    "Полузащитник": 6,
+    "Нападающий": 4,
+}
 
 for team in teams:
-    opponents = random.sample(teams, 5)  # Выбираем 5 случайных команд-соперников
-    for opponent in opponents:
-        if team != opponent:
-            match = Matches.objects.create(
-                home_team=team,
-                away_team=opponent,
-                date_match=random.choice(match_dates),
-                home_goals=random.randint(0, 5),
-                away_goals=random.randint(0, 5),
-                stadium=fake.company(),
-                status="Закончен"
+    for position, count in positions.items():
+        for _ in range(count):
+            player = Players.objects.create(
+                team=team,
+                first_name=fake.first_name(),
+                last_name=fake.last_name(),
+                birth_date=fake.date_of_birth(minimum_age=18, maximum_age=35),
+                position=position,
+                number=random.randint(1, 99),
+                height=random.randint(170, 195),
+                weight=random.randint(65, 95),
+                nationality="Кыргызстан",
+                goals=random.randint(0, 15),
+                assists=random.randint(0, 10),
+                yellow_cards=random.randint(0, 5),
+                red_cards=random.randint(0, 2),
+                games=random.randint(5, 27),
+                minutes=random.randint(300, 2500),
             )
-            matches.append(match)
 
-print("База данных успешно заполнена!")
+            # Статистика игрока за сезон
+            StaticticsPlayerSeason.objects.create(
+                player=player,
+                season=season_2024,  # Указываем сезон
+                tournament=tournament_2024,  # Указываем турнир
+                goals=player.goals,
+                assists=player.assists,
+                yellow_cards=player.yellow_cards,
+                red_cards=player.red_cards,
+                games=player.games,
+                minutes=player.minutes
+            )
+
+
+print("Команды, игроки и турнирная таблица успешно добавлены в базу данных!")

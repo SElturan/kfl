@@ -1,3 +1,4 @@
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
 class Teams(models.Model):
@@ -7,6 +8,12 @@ class Teams(models.Model):
     stadium = models.CharField(max_length=100, verbose_name='Стадион',null=True, blank=True)
     coach = models.CharField(max_length=100, verbose_name='Тренер',null=True, blank=True)
     founded_year = models.IntegerField(verbose_name='Год основания',null=True, blank=True)
+    wins = models.IntegerField(verbose_name='Побед',null=True, blank=True)
+    draws = models.IntegerField(verbose_name='Ничьих',null=True, blank=True)
+    losses = models.IntegerField(verbose_name='Поражений',null=True, blank=True)
+    goals_scored = models.IntegerField(verbose_name='Забитых мячей',null=True, blank=True)
+    goals_conceded = models.IntegerField(verbose_name='Пропущенных мячей',null=True, blank=True)
+    clean_sheets = models.IntegerField(verbose_name='Сухих матчей',null=True, blank=True)
 
 
     def __str__(self):
@@ -15,6 +22,22 @@ class Teams(models.Model):
     class Meta:
         verbose_name = 'Команда'
         verbose_name_plural = 'Команды'
+
+
+class Management(models.Model):
+    team = models.ForeignKey(Teams, on_delete=models.CASCADE, verbose_name='Команда')
+    first_name = models.CharField(max_length=100, verbose_name='Имя')
+    last_name = models.CharField(max_length=100, verbose_name='Фамилия')
+    position = models.CharField(max_length=100, verbose_name='Должность')
+    photo = models.ImageField(upload_to='management/', verbose_name='Фото',null=True, blank=True)
+
+    def __str__(self):
+        return self.first_name + ' ' + self.last_name
+
+    class Meta:
+        verbose_name = 'Руководство'
+        verbose_name_plural = 'Руководство'
+
 
 class Players(models.Model):
 
@@ -49,29 +72,91 @@ class Players(models.Model):
         verbose_name_plural = 'Игроки'
 
 
-class Matches(models.Model): 
+class Season(models.Model):
+    year = models.CharField(max_length=9, unique=True, verbose_name='Сезон')
+    is_current = models.BooleanField(default=False, verbose_name='Текущий')
+    start_date = models.DateField(verbose_name="Дата начала")
+    end_date = models.DateField(verbose_name="Дата окончания")
 
-    class StatusChoices(models.TextChoices):
-        NOT_STARTED = 'Не начался'
-        IN_PROGRESS = 'В процессе'
-        FINISHED = 'Закончен'
+    def __str__(self):
+        return self.year
 
-    home_team = models.ForeignKey(Teams, on_delete=models.CASCADE, related_name='home_team', verbose_name='Хозяева')
-    away_team = models.ForeignKey(Teams, on_delete=models.CASCADE, related_name='away_team', verbose_name='Гости')
-    date_match = models.DateField(verbose_name='Дата матча',null=True, blank=True)
-    home_goals = models.IntegerField(verbose_name='Голы хозяев',null=True, blank=True)
-    away_goals = models.IntegerField(verbose_name='Голы гостей',null=True, blank=True)
-    stadium = models.CharField(max_length=100, verbose_name='Стадион',null=True, blank=True)
-    status = models.CharField(max_length=100, verbose_name='Статус')
+    class Meta:
+        verbose_name = "Сезон"
+        verbose_name_plural = "Сезоны"
+
+
+class Tournament(models.Model):
+    name = models.CharField(max_length=100, verbose_name='Название турнира')
+    logo = models.ImageField(upload_to='tournaments/', verbose_name='Логотип турнира', null=True, blank=True)
+    country = models.CharField(max_length=100, verbose_name='Страна', null=True, blank=True)
+    season = models.ForeignKey(Season, on_delete=models.CASCADE, verbose_name="Сезон", related_name="tournaments")
+
+    def __str__(self):
+        return f"{self.name} ({self.season.year})"
+
+    class Meta:
+        verbose_name = 'Турнир'
+        verbose_name_plural = 'Турниры'
+
+
+class Round(models.Model):
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, verbose_name="Турнир", related_name="rounds")
+    season = models.ForeignKey(Season, on_delete=models.CASCADE, verbose_name="Сезон", related_name="rounds")
+    round_number = models.PositiveIntegerField(verbose_name="Номер тура")
 
 
     def __str__(self):
-        return self.home_team.name + ' ' + str(self.home_goals) + ' - ' + str(self.away_goals) + ' ' + self.away_team.name
+        return f"{self.tournament.name} {self.season.year} - Тур {self.round_number}"
+
+    class Meta:
+        verbose_name = "Тур"
+        verbose_name_plural = "Туры"
+        ordering = ["round_number"]
+
+
+class Matches(models.Model):
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, verbose_name="Турнир", related_name="matches")
+    season = models.ForeignKey(Season, on_delete=models.CASCADE, verbose_name="Сезон", related_name="matches")
+    round = models.ForeignKey(Round, on_delete=models.CASCADE, verbose_name="Тур", related_name="matches", null=True, blank=True)
+    home_team = models.ForeignKey(Teams, on_delete=models.CASCADE, related_name='home_matches', verbose_name='Хозяева')
+    away_team = models.ForeignKey(Teams, on_delete=models.CASCADE, related_name='away_matches', verbose_name='Гости')
+    date_match = models.DateField(verbose_name='Дата матча', null=True, blank=True)
+    home_goals = models.IntegerField(verbose_name='Голы хозяев', null=True, blank=True)
+    away_goals = models.IntegerField(verbose_name='Голы гостей', null=True, blank=True)
+    stadium = models.CharField(max_length=100, verbose_name='Стадион', null=True, blank=True)
+    status = models.CharField(
+        max_length=100,
+        choices=[
+            ('Не начался', 'Не начался'),
+            ('В процессе', 'В процессе'),
+            ('Закончен', 'Закончен')
+        ],
+        verbose_name='Статус'
+    )
+    mvp = models.ForeignKey(Players, on_delete=models.CASCADE, verbose_name='Лучший игрок', null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.home_team.name} vs {self.away_team.name} ({self.tournament.name} {self.season.year})"
 
     class Meta:
         verbose_name = 'Матч'
         verbose_name_plural = 'Матчи'
 
+class MatchLineup(models.Model):
+    match = models.ForeignKey(Matches, on_delete=models.CASCADE, related_name="lineups", verbose_name="Матч")
+    team = models.ForeignKey(Teams, on_delete=models.CASCADE, related_name="lineups", verbose_name="Команда")
+    player = models.ForeignKey(Players, on_delete=models.CASCADE, related_name="lineups", verbose_name="Игрок")
+    
+    is_starting = models.BooleanField(default=False, verbose_name="В стартовом составе")
+    is_substitute = models.BooleanField(default=False, verbose_name="Запасной")
+
+    def __str__(self):
+        return f"{self.player.name} ({self.team.name}) - {self.match}"
+
+    class Meta:
+        verbose_name = "Состав матча"
+        verbose_name_plural = "Составы матчей"
 
 class EventsMathes(models.Model):
 
@@ -86,25 +171,26 @@ class EventsMathes(models.Model):
         AUTO_GOAL = 'Автогол'
         INJURY = 'Травма'
 
-
     match = models.ForeignKey(Matches, on_delete=models.CASCADE, verbose_name='Матч')
     player = models.ForeignKey(Players, on_delete=models.CASCADE, verbose_name='Игрок')
     event = models.CharField(max_length=100, choices=EventChoices.choices, verbose_name='Событие')
-    time = models.TimeField(verbose_name='Время')
+    time = models.PositiveIntegerField(
+        verbose_name='Минута матча',
+        validators=[MinValueValidator(0), MaxValueValidator(130)]
+    )
 
     def __str__(self):
-        return self.player.first_name + ' ' + self.player.last_name + ' - ' + self.event
+        return f"{self.time}’ {self.player.first_name} {self.player.last_name} - {self.event}"
 
     class Meta:
         verbose_name = 'Событие'
         verbose_name_plural = 'События'
 
+
 class StaticticsPlayerSeason(models.Model):
-
-    YEAR_CHOICES = [(str(year), str(year)) for year in range(1800, 2101)]
-
     player = models.ForeignKey(Players, on_delete=models.CASCADE, verbose_name='Игрок')
-    season = models.CharField(max_length=100, choices=YEAR_CHOICES, verbose_name='Сезон')
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, verbose_name="Турнир", related_name="player_stats")
+    season = models.ForeignKey(Season, on_delete=models.CASCADE, verbose_name="Сезон", related_name="player_stats")
     goals = models.IntegerField(verbose_name='Голы')
     assists = models.IntegerField(verbose_name='Пасы')
     yellow_cards = models.IntegerField(verbose_name='Желтые карточки')
@@ -113,32 +199,62 @@ class StaticticsPlayerSeason(models.Model):
     minutes = models.IntegerField(verbose_name='Минуты')
 
     def __str__(self):
-        return self.player.first_name + ' ' + self.player.last_name + ' - ' + self.season
+        return f"{self.player.first_name} {self.player.last_name} - {self.tournament.name} {self.season.year}"
 
     class Meta:
         verbose_name = 'Статистика игрока за сезон'
         verbose_name_plural = 'Статистика игроков за сезон'
 
+
+class SeasonAwards(models.Model):
+    season = models.ForeignKey(Season, on_delete=models.CASCADE, verbose_name="Сезон", related_name="awards")
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, verbose_name="Турнир", related_name="awards")
+
+    best_scorer = models.ForeignKey(
+        Players, on_delete=models.SET_NULL, verbose_name="Лучший бомбардир", null=True, blank=True, related_name="best_scorer"
+    )
+    best_goalkeeper = models.ForeignKey(
+        Players, on_delete=models.SET_NULL, verbose_name="Лучший вратарь", null=True, blank=True, related_name="best_goalkeeper"
+    )
+    best_coach = models.ForeignKey(
+        Management, on_delete=models.SET_NULL, verbose_name="Лучший тренер", null=True, blank=True, related_name="best_coach"
+    )
+    best_team = models.ForeignKey(
+        Teams, on_delete=models.SET_NULL, verbose_name="Лучшая команда", null=True, blank=True, related_name="best_team"
+    )
+    best_player = models.ForeignKey(
+        Players, on_delete=models.SET_NULL, verbose_name="Лучший игрок сезона", null=True, blank=True, related_name="best_player"
+    )
+
+    def __str__(self):
+        return f"Аварды {self.tournament.name} {self.season.year}"
+
+    class Meta:
+        verbose_name = "Награды сезона"
+        verbose_name_plural = "Награды сезона"
+
+
+
 class Standings(models.Model):
-
-    YEAR_CHOICES = [(str(year), str(year)) for year in range(1800, 2101)]
-
     team = models.ForeignKey(Teams, on_delete=models.CASCADE, verbose_name='Команда')
-    season = models.CharField(max_length=100, choices=YEAR_CHOICES, verbose_name='Сезон')
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, verbose_name="Турнир", related_name="standings")
+    season = models.ForeignKey(Season, on_delete=models.CASCADE, verbose_name="Сезон", related_name="standings")
     games = models.IntegerField(verbose_name='Игры')
     wins = models.IntegerField(verbose_name='Победы')
     draws = models.IntegerField(verbose_name='Ничьи')
     losses = models.IntegerField(verbose_name='Поражения')
     goals_scored = models.IntegerField(verbose_name='Забитые голы')
     goals_conceded = models.IntegerField(verbose_name='Пропущенные голы')
+    goals_difference = models.IntegerField(verbose_name='Разница голов', null=True, blank=True)
     points = models.IntegerField(verbose_name='Очки')
 
     def __str__(self):
-        return self.team.name + ' - ' + self.season
+        return f"{self.team.name} - {self.tournament.name} - {self.season.year}"
 
     class Meta:
         verbose_name = 'Турнирная таблица'
         verbose_name_plural = 'Турнирные таблицы'
+
 
 
 class SiteSettings(models.Model):
