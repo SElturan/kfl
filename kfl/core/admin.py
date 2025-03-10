@@ -1,6 +1,8 @@
 from django.contrib import admin
-from .models import Teams, Management, Players, Season, Tournament, Round, Matches, MatchLineup, EventsMathes, StaticticsPlayerSeason, SeasonAwards, Standings, SiteSettings, News, BestMoments, Sponsor
-from .forms import MatchEventAdminForm
+from .models import Teams, Management, Players, Season, Tournament, \
+    Round, Matches, MatchLineup, EventsMathes, \
+        StaticticsPlayerSeason, SeasonAwards, Standings, \
+            SiteSettings, News, BestMoments, Sponsor, CompanyInfo, Judge
 # Для модели Teams
 class TeamsAdmin(admin.ModelAdmin):
     list_display = ('id','name', 'city', 'stadium', 'coach', 'founded_year')
@@ -108,6 +110,16 @@ class SponsorAdmin(admin.ModelAdmin):
     
     photo_preview.allow_tags = True
     photo_preview.short_description = "Превью фото"
+
+@admin.register(CompanyInfo)
+class CompanyInfoAdmin(admin.ModelAdmin):
+    list_display = ('id','about', 'documents', 'management', 'address', 'phone', 'email', 'facebook_link', 'instagram_link', 'tiktok_link', 'youtube_link', )
+
+@admin.register(Judge)
+class JudgeAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'photo')
+
+
 
 # Регистрируем модели
 admin.site.register(Teams, TeamsAdmin)
