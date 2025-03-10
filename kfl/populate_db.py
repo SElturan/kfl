@@ -39,7 +39,6 @@ season_2024, created = Season.objects.get_or_create(
 # Создание турнира с указанием сезона
 tournament_2024, created = Tournament.objects.get_or_create(
     name="Турнир 2024",  # Название турнира
-    season=season_2024  # Указываем сезон, связанный с турниром
 )
 
 # Создание команд

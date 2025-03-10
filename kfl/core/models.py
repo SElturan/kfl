@@ -72,32 +72,30 @@ class Players(models.Model):
         verbose_name_plural = 'Игроки'
 
 
+class Tournament(models.Model):
+    name = models.CharField(max_length=100, verbose_name='Название турнира')
+    logo = models.ImageField(upload_to='tournaments/', verbose_name='Логотип турнира', null=True, blank=True)
+    country = models.CharField(max_length=100, verbose_name='Страна', null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.name}"
+
+    class Meta:
+        verbose_name = 'Турнир'
+        verbose_name_plural = 'Турниры'
+
 class Season(models.Model):
-    year = models.CharField(max_length=9, unique=True, verbose_name='Сезон')
+    year = models.IntegerField(unique=True, verbose_name='Сезон')
     is_current = models.BooleanField(default=False, verbose_name='Текущий')
     start_date = models.DateField(verbose_name="Дата начала")
     end_date = models.DateField(verbose_name="Дата окончания")
 
     def __str__(self):
-        return self.year
+        return f"{self.year}"
 
     class Meta:
         verbose_name = "Сезон"
         verbose_name_plural = "Сезоны"
-
-
-class Tournament(models.Model):
-    name = models.CharField(max_length=100, verbose_name='Название турнира')
-    logo = models.ImageField(upload_to='tournaments/', verbose_name='Логотип турнира', null=True, blank=True)
-    country = models.CharField(max_length=100, verbose_name='Страна', null=True, blank=True)
-    season = models.ForeignKey(Season, on_delete=models.CASCADE, verbose_name="Сезон", related_name="tournaments")
-
-    def __str__(self):
-        return f"{self.name} ({self.season.year})"
-
-    class Meta:
-        verbose_name = 'Турнир'
-        verbose_name_plural = 'Турниры'
 
 
 class Round(models.Model):
@@ -152,7 +150,7 @@ class MatchLineup(models.Model):
     is_substitute = models.BooleanField(default=False, verbose_name="Запасной")
 
     def __str__(self):
-        return f"{self.player.name} ({self.team.name}) - {self.match}"
+        return f"{self.team.name}) - {self.match}"
 
     class Meta:
         verbose_name = "Состав матча"
@@ -302,3 +300,13 @@ class BestMoments(models.Model):
         verbose_name = 'Лучшие моменты'
         verbose_name_plural = 'Лучшие моменты'
 
+class Sponsor(models.Model):
+    name = models.CharField(max_length=100, verbose_name='Спонсор')
+    photo = models.ImageField(upload_to='sponsor_logo/', verbose_name="Фото спонсора", null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Спонсор'
+        verbose_name_plural = 'Спонсоры'

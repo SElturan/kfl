@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Teams, Management, Players, Season, Tournament, Round, Matches, MatchLineup, EventsMathes, StaticticsPlayerSeason, SeasonAwards, Standings, SiteSettings, News, BestMoments
+from .models import Teams, Management, Players, Season, Tournament, Round, Matches, MatchLineup, EventsMathes, StaticticsPlayerSeason, SeasonAwards, Standings, SiteSettings, News, BestMoments, Sponsor
 
 # Для модели Teams
 class TeamsAdmin(admin.ModelAdmin):
@@ -19,17 +19,17 @@ class PlayersAdmin(admin.ModelAdmin):
     search_fields = ('first_name', 'last_name', 'team__name')
     list_filter = ('team', 'position', 'games', 'goals', 'yellow_cards')
 
-# Для модели Season
+# Для модели Tournament
+class TournamentAdmin(admin.ModelAdmin):
+    list_display = ('id','name','country')
+    search_fields = ('name', 'country')
+
+
 class SeasonAdmin(admin.ModelAdmin):
     list_display = ('id','year', 'is_current', 'start_date', 'end_date')
     search_fields = ('year',)
     list_filter = ('is_current',)
 
-# Для модели Tournament
-class TournamentAdmin(admin.ModelAdmin):
-    list_display = ('id','name', 'season', 'country')
-    search_fields = ('name', 'season__year', 'country')
-    list_filter = ('season',)
 
 # Для модели Round
 class RoundAdmin(admin.ModelAdmin):
@@ -89,6 +89,19 @@ class BestMomentsAdmin(admin.ModelAdmin):
     list_display = ('id','title', 'description', 'link_moments', 'date')
     search_fields = ('title', 'description')
     list_filter = ('date',)
+
+@admin.register(Sponsor)
+class SponsorAdmin(admin.ModelAdmin):
+    list_display = ('name', 'photo_preview')
+    search_fields = ('name',)
+
+    def photo_preview(self, obj):
+        if obj.photo:
+            return f'<img src="{obj.photo.url}" width="50" height="50" style="object-fit: cover; border-radius: 5px;" />'
+        return "Нет фото"
+    
+    photo_preview.allow_tags = True
+    photo_preview.short_description = "Превью фото"
 
 # Регистрируем модели
 admin.site.register(Teams, TeamsAdmin)
