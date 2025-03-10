@@ -2,7 +2,7 @@ from django.urls import path
 from django.urls.conf import include
 from .views import TeamsModelViewSet, StandingsListView, TeamMatchesView, MatchListView, MatchEventsListView, PlayerDetailView, \
 SiteDataListAPIView, NewsListView, NewsDetailView,BestMomentsListView ,MatchLineupListView,MatchDetailView ,\
-    PlayerStatisticsViewSet, SeasonAwardsListView, SeasonListView, TournamentListView, RoundListView, CompanyInfoListView
+    PlayerStatisticsViewSet, SeasonAwardsListView, SeasonListView, TournamentListView, RoundListView, CompanyInfoListView, JudgeListView
 from rest_framework import routers
 
 router = routers.SimpleRouter()
@@ -27,5 +27,6 @@ urlpatterns = [
     path('api/rounds/', RoundListView.as_view(), name='round-list'),
     path('api/news/', NewsListView.as_view(), name='news-list'),
     path('api/best-moments/', BestMomentsListView.as_view(), name='best-moments-list'),
-    path('company-info/', CompanyInfoListView.as_view(), name='company-info-list'),
+    path('api/company-info/', CompanyInfoListView.as_view(), name='company-info-list'),
+    path('api/judges/', JudgeListView.as_view(), name='judge-list'),
 ]
