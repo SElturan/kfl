@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from .models import Teams,Management ,Players, \
-SeasonAwards,Standings, Matches, EventsMathes, StaticticsPlayerSeason, SiteSettings, News, BestMoments, MatchLineup, Season, Tournament, Round, Sponsor
+SeasonAwards,Standings, Matches, EventsMathes, \
+StaticticsPlayerSeason, SiteSettings, News, \
+BestMoments, MatchLineup, Season, Tournament, Round, Sponsor\
+,CompanyInfo, Judge
 
 
 class TeamsSerializer(serializers.ModelSerializer):
@@ -12,7 +15,7 @@ class TeamsSerializer(serializers.ModelSerializer):
 class TeamsDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Teams
-        fields = ['id','name', 'logo', 'city', 'stadium', 'coach', 'founded_year', 'wins', 'draws', 'losses', 'goals_scored', 'goals_conceded', 'clean_sheets', ]
+        fields = ['id','name', 'logo', 'city', 'stadium', 'coach', 'founded_year', ]
 
 
 class ManagementSerializer(serializers.ModelSerializer):
@@ -84,7 +87,7 @@ class MatchesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Matches
-        fields = ['id','tournament_name', 'season_year', 'round_number', 'home_team_logo', 'away_team_logo', 'home_team_name', 'away_team_name', 'date_match', 'home_goals', 'away_goals', 'stadium', 'status', 'mvp']
+        fields = ['id','tournament_name', 'season_year', 'round_number', 'home_team_logo', 'away_team_logo', 'home_team_name', 'away_team_name', 'date_match','time_match','home_goals', 'away_goals', 'stadium', 'status', 'mvp', 'documents']
 
 class MatchLineupSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
@@ -105,7 +108,7 @@ class EventsMathesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EventsMathes
-        fields = ['id', 'match_info', 'player_name', 'player_team_id','player_team_name','event', 'time']
+        fields = ['id', 'match_info', 'player_name', 'player_team_id','player_team_name','event', 'time', 'documents']
 
     def get_player_name(self, obj):
         return f"{obj.player.first_name} {obj.player.last_name}"
@@ -126,7 +129,7 @@ class MatchDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Matches
-        fields = ['id', 'home_team_logo', 'away_team_logo', 'home_team', 'away_team', 'home_goals','away_goals' ,'date_match', 'events']
+        fields = ['id', 'home_team_logo', 'away_team_logo', 'home_team', 'away_team', 'home_goals','away_goals' ,'date_match', 'time_match','events', 'documents']
 
 
     def get_events(self, obj):
@@ -196,3 +199,15 @@ class SponsorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sponsor
         fields = ['id', 'name', 'photo']
+
+
+class CompanyInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompanyInfo
+        fields = '__all__'
+
+
+class JudgeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Judge
+        fields = '__all__'

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import Teams, Management, Players, Season, Tournament, Round, Matches, MatchLineup, EventsMathes, StaticticsPlayerSeason, SeasonAwards, Standings, SiteSettings, News, BestMoments, Sponsor
-
+from .forms import MatchEventAdminForm
 # Для модели Teams
 class TeamsAdmin(admin.ModelAdmin):
     list_display = ('id','name', 'city', 'stadium', 'coach', 'founded_year')
@@ -39,7 +39,7 @@ class RoundAdmin(admin.ModelAdmin):
 
 # Для модели Matches
 class MatchesAdmin(admin.ModelAdmin):
-    list_display = ('id','tournament', 'season', 'home_team', 'away_team', 'date_match', 'status', 'home_goals', 'away_goals', 'stadium')
+    list_display = ('id','tournament', 'season', 'home_team', 'away_team', 'date_match','time_match', 'status', 'home_goals', 'away_goals', 'stadium', 'documents')
     search_fields = ('tournament__name', 'home_team__name', 'away_team__name')
     list_filter = ('tournament', 'season', 'status', 'home_team', 'away_team')
 
@@ -49,12 +49,18 @@ class MatchLineupAdmin(admin.ModelAdmin):
     search_fields = ('match__tournament__name', 'player__first_name', 'player__last_name')
     list_filter = ('match', 'team', 'is_starting', 'is_substitute')
 
-# Для модели EventsMathes
 class EventsMathesAdmin(admin.ModelAdmin):
-    list_display = ('id','match', 'player', 'event', 'time')
+    list_display = ('id', 'match', 'player', 'event', 'time')
     search_fields = ('match__tournament__name', 'player__first_name', 'player__last_name', 'event')
     list_filter = ('match', 'event')
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "match":
+            # Фильтруем только матчи со статусом "В процессе"
+            kwargs['queryset'] = Matches.objects.filter(status="В процессе")
+
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+    
 # Для модели StaticticsPlayerSeason
 class StaticticsPlayerSeasonAdmin(admin.ModelAdmin):
     list_display = ('id','player', 'tournament', 'season', 'goals', 'assists', 'yellow_cards', 'red_cards', 'games', 'minutes')

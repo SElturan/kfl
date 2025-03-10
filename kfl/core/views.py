@@ -11,10 +11,11 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework.filters import OrderingFilter
 from rest_framework import filters, generics, status, viewsets, mixins
 from .models import Teams, Season,Players, Management ,StaticticsPlayerSeason , \
-SeasonAwards,Standings, Matches, EventsMathes, SiteSettings, News, BestMoments, MatchLineup, Season, Tournament, Round, Sponsor
+SeasonAwards,Standings, Matches, EventsMathes, SiteSettings, News, BestMoments, MatchLineup, Season, Tournament, Round, Sponsor, CompanyInfo, Judge
 from django.db.models import Q, Case, When, Value, IntegerField
 from .serializers import TeamsSerializer, ManagementSerializer,StaticticsPlayerSeasonSerializer ,TeamsDetailSerializer, PlayersSerializer, StandingsSerializer, PlayerDetailSerializer, MatchesSerializer, EventsMathesSerializer, SiteSettingsSerializer, NewsSerializer, \
-    BestMomentsSerializer, MatchDetailSerializer,MatchLineupSerializer, SeasonAwardsSerializer, SeasonSerializer, TournamentSerializer, RoundSerializer, SponsorSerializer
+    BestMomentsSerializer, MatchDetailSerializer,MatchLineupSerializer, SeasonAwardsSerializer, \
+        SeasonSerializer, TournamentSerializer, RoundSerializer, SponsorSerializer, CompanyInfoSerializer, JudgeSerializer
 from django.utils.timezone import now
 from .pagination import StandardResultsSetPagination
 
@@ -459,3 +460,11 @@ class BestMomentsListView(ListAPIView):
     pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['title', 'description']
+
+class CompanyInfoListView(ListAPIView):
+    queryset = CompanyInfo.objects.all()
+    serializer_class = CompanyInfoSerializer
+
+class JudgeListView(ListAPIView):
+    queryset = Judge.objects.all()
+    serializer_class = JudgeSerializer

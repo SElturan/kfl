@@ -8,13 +8,6 @@ class Teams(models.Model):
     stadium = models.CharField(max_length=100, verbose_name='Стадион',null=True, blank=True)
     coach = models.CharField(max_length=100, verbose_name='Тренер',null=True, blank=True)
     founded_year = models.IntegerField(verbose_name='Год основания',null=True, blank=True)
-    wins = models.IntegerField(verbose_name='Побед',null=True, blank=True)
-    draws = models.IntegerField(verbose_name='Ничьих',null=True, blank=True)
-    losses = models.IntegerField(verbose_name='Поражений',null=True, blank=True)
-    goals_scored = models.IntegerField(verbose_name='Забитых мячей',null=True, blank=True)
-    goals_conceded = models.IntegerField(verbose_name='Пропущенных мячей',null=True, blank=True)
-    clean_sheets = models.IntegerField(verbose_name='Сухих матчей',null=True, blank=True)
-
 
     def __str__(self):
         return self.name
@@ -65,7 +58,7 @@ class Players(models.Model):
     minutes = models.IntegerField(verbose_name='Минуты',null=True, blank=True)
 
     def __str__(self):
-        return self.first_name + ' ' + self.last_name
+        return f"{self.team.name} - {self.first_name} {self.last_name}"
 
     class Meta:
         verbose_name = 'Игрок'
@@ -120,6 +113,7 @@ class Matches(models.Model):
     home_team = models.ForeignKey(Teams, on_delete=models.CASCADE, related_name='home_matches', verbose_name='Хозяева')
     away_team = models.ForeignKey(Teams, on_delete=models.CASCADE, related_name='away_matches', verbose_name='Гости')
     date_match = models.DateField(verbose_name='Дата матча', null=True, blank=True)
+    time_match = models.TimeField(verbose_name='Время матча', null=True, blank=True)
     home_goals = models.IntegerField(verbose_name='Голы хозяев', null=True, blank=True)
     away_goals = models.IntegerField(verbose_name='Голы гостей', null=True, blank=True)
     stadium = models.CharField(max_length=100, verbose_name='Стадион', null=True, blank=True)
@@ -133,6 +127,7 @@ class Matches(models.Model):
         verbose_name='Статус'
     )
     mvp = models.ForeignKey(Players, on_delete=models.CASCADE, verbose_name='Лучший игрок', null=True, blank=True)
+    documents = models.FileField(upload_to='documents/', verbose_name='Документы', null=True, blank=True)
 
     def __str__(self):
         return f"{self.home_team.name} vs {self.away_team.name} ({self.tournament.name} {self.season.year})"
@@ -310,3 +305,29 @@ class Sponsor(models.Model):
     class Meta:
         verbose_name = 'Спонсор'
         verbose_name_plural = 'Спонсоры'
+
+
+class CompanyInfo(models.Model):
+    about = models.TextField(verbose_name="О нас")
+    documents = models.FileField(upload_to='documents/', verbose_name='Документы', null=True, blank=True)
+    management = models.TextField(verbose_name="Руководство")
+
+    address = models.CharField(max_length=255, verbose_name="Адрес")
+    phone = models.CharField(max_length=20, verbose_name="Телефон")
+    email = models.EmailField(verbose_name="Email")
+
+    facebook_link = models.URLField(verbose_name="Facebook", null=True, blank=True)
+    instagram_link = models.URLField(verbose_name="Instagram", null=True, blank=True)
+    tiktok_link = models.URLField(verbose_name="TikTok", null=True, blank=True)
+    youtube_link = models.URLField(verbose_name="YouTube", null=True, blank=True)
+
+    def __str__(self):
+        return "Информация о компании"
+    
+
+class Judge(models.Model):
+    name = models.CharField(max_length=255, verbose_name="Имя")
+    photo = models.ImageField(upload_to="judges/", verbose_name="Фото", blank=True, null=True)
+    
+    def __str__(self):
+        return self.name
