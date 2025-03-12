@@ -3,7 +3,7 @@ from .models import Teams,Management ,Players, \
 SeasonAwards,Standings, Matches, EventsMathes, \
 StaticticsPlayerSeason, SiteSettings, News, \
 BestMoments, MatchLineup, Season, Tournament, Round, Sponsor\
-,CompanyInfo, Judge
+,CompanyInfo, Judge, NewsImage, Document, ManegementKfl
 
 
 class TeamsSerializer(serializers.ModelSerializer):
@@ -69,6 +69,8 @@ class PlayerDetailSerializer(serializers.ModelSerializer):
 class StandingsSerializer(serializers.ModelSerializer):
     team_name = serializers.CharField(source='team.name', read_only=True)
     team_logo = serializers.CharField(source='team.logo', read_only=True)
+    season = serializers.CharField(source='season.year', read_only=True)
+    tournament = serializers.CharField(source='tournament.name', read_only=True)
     calculated_goals_difference = serializers.IntegerField(read_only=True)
 
     class Meta:
@@ -108,7 +110,7 @@ class EventsMathesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EventsMathes
-        fields = ['id', 'match_info', 'player_name', 'player_team_id','player_team_name','event', 'time', 'documents']
+        fields = ['id', 'match_info', 'player_name', 'player_team_id','player_team_name','event', 'time',]
 
     def get_player_name(self, obj):
         return f"{obj.player.first_name} {obj.player.last_name}"
@@ -183,10 +185,17 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
         fields = ['logo', 'title', 'facebook_link', 'instagram_link', 'tiktok_link', 'youtube_link', 'copy_right']
 
 
+class NewsImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NewsImage
+        fields = ['id', 'image']
+
 class NewsSerializer(serializers.ModelSerializer):
+    images = NewsImageSerializer(many=True, read_only=True)
+
     class Meta:
         model = News
-        fields = ['id', 'image', 'title', 'text', 'date']
+        fields = ['id', 'title', 'text', 'date', 'images']
 
 
 class BestMomentsSerializer(serializers.ModelSerializer):
@@ -204,6 +213,16 @@ class SponsorSerializer(serializers.ModelSerializer):
 class CompanyInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompanyInfo
+        fields = '__all__'
+
+class DocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = '__all__'
+
+class ManegementKflSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ManegementKfl
         fields = '__all__'
 
 

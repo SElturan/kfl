@@ -11,11 +11,11 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework.filters import OrderingFilter
 from rest_framework import filters, generics, status, viewsets, mixins
 from .models import Teams, Season,Players, Management ,StaticticsPlayerSeason , \
-SeasonAwards,Standings, Matches, EventsMathes, SiteSettings, News, BestMoments, MatchLineup, Season, Tournament, Round, Sponsor, CompanyInfo, Judge
+SeasonAwards,Standings, Matches, EventsMathes, SiteSettings, News, BestMoments, MatchLineup, Season, Tournament, Round, Sponsor, CompanyInfo, Judge, NewsImage, Document, ManegementKfl
 from django.db.models import Q, Case, When, Value, IntegerField
 from .serializers import TeamsSerializer, ManagementSerializer,StaticticsPlayerSeasonSerializer ,TeamsDetailSerializer, PlayersSerializer, StandingsSerializer, PlayerDetailSerializer, MatchesSerializer, EventsMathesSerializer, SiteSettingsSerializer, NewsSerializer, \
     BestMomentsSerializer, MatchDetailSerializer,MatchLineupSerializer, SeasonAwardsSerializer, \
-        SeasonSerializer, TournamentSerializer, RoundSerializer, SponsorSerializer, CompanyInfoSerializer, JudgeSerializer
+        SeasonSerializer, TournamentSerializer, RoundSerializer, SponsorSerializer, CompanyInfoSerializer, JudgeSerializer, NewsImageSerializer, DocumentSerializer, ManegementKflSerializer
 from django.utils.timezone import now
 from .pagination import StandardResultsSetPagination
 
@@ -100,34 +100,48 @@ class StandingsListView(ListAPIView):
     def get_queryset(self):
         standings = Standings.objects.select_related('team', 'tournament')
 
+        # Вычисляем разницу мячей
         for standing in standings:
             standing.goals_difference = standing.goals_scored - standing.goals_conceded
             standing.save()
 
-        return standings.order_by('-points', '-goals_difference')
+        # Сортировка по:
+        # - очкам (по убыванию)
+        # - разнице мячей (по убыванию)
+        # - забитым мячам (по убыванию)
+        # - количеству побед (по убыванию)
+        return standings.order_by(
+            '-points', 
+            '-goals_difference', 
+            '-goals_scored', 
+            '-wins'  # предполагается, что у вас есть поле 'wins' для количества побед
+        )
 
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         season_year = request.query_params.get("season__year")
         tournament_id = request.query_params.get("tournament")
+        
         top_scorers = StaticticsPlayerSeason.objects.all().select_related('player')
         
         if season_year and tournament_id:
             top_scorers = top_scorers.filter(season__year=season_year, tournament=tournament_id)
         
+        # Сортировка по количеству голов
         top_scorers = top_scorers.order_by('-goals')[:3]
 
+        # Формируем ответ с топ-голеадорами
         response.data = {
             "standings": response.data,
             "top_scorers": [
-                {   "id": scorer.player.id,
+                {   
+                    "id": scorer.player.id,
                     "player_photo": scorer.player.photo.url if scorer.player.photo else None,
                     "player": f"{scorer.player.first_name} {scorer.player.last_name}",
                     "number": scorer.player.number,
                     "goals": scorer.goals,
                     "team": scorer.player.team.name if scorer.player.team else None,
                     "team_logo": scorer.player.team.logo.url if scorer.player.team.logo else None,
-                    
                 }
                 for scorer in top_scorers
             ]
@@ -464,6 +478,14 @@ class BestMomentsListView(ListAPIView):
 class CompanyInfoListView(ListAPIView):
     queryset = CompanyInfo.objects.all()
     serializer_class = CompanyInfoSerializer
+
+class DocumentListView(ListAPIView):
+    queryset = Document.objects.all()
+    serializer_class = DocumentSerializer
+
+class ManegementKflListView(ListAPIView):
+    queryset = ManegementKfl.objects.all()
+    serializer_class = ManegementKflSerializer
 
 class JudgeListView(ListAPIView):
     queryset = Judge.objects.all()

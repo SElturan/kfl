@@ -28,8 +28,8 @@ class Management(models.Model):
         return self.first_name + ' ' + self.last_name
 
     class Meta:
-        verbose_name = 'Руководство'
-        verbose_name_plural = 'Руководство'
+        verbose_name = 'Руководство команды'
+        verbose_name_plural = 'Руководство команды'
 
 
 class Players(models.Model):
@@ -105,10 +105,22 @@ class Round(models.Model):
         verbose_name_plural = "Туры"
         ordering = ["round_number"]
 
+class Stadium(models.Model):
+    name = models.CharField(max_length=100, verbose_name='Название стадиона')
+    city = models.CharField(max_length=100, verbose_name='Город')
+    capacity = models.IntegerField(verbose_name='Вместимость')
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Стадион'
+        verbose_name_plural = 'Стадионы'
 
 class Matches(models.Model):
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, verbose_name="Турнир", related_name="matches")
     season = models.ForeignKey(Season, on_delete=models.CASCADE, verbose_name="Сезон", related_name="matches")
+    stadium = models.ForeignKey(Stadium, on_delete=models.CASCADE, verbose_name="Стадион", related_name="matches")
     round = models.ForeignKey(Round, on_delete=models.CASCADE, verbose_name="Тур", related_name="matches", null=True, blank=True)
     home_team = models.ForeignKey(Teams, on_delete=models.CASCADE, related_name='home_matches', verbose_name='Хозяева')
     away_team = models.ForeignKey(Teams, on_delete=models.CASCADE, related_name='away_matches', verbose_name='Гости')
@@ -271,7 +283,6 @@ class SiteSettings(models.Model):
 class News(models.Model):
     title = models.CharField(max_length=100, verbose_name='Заголовок')
     text = models.TextField(verbose_name='Текст')
-    image = models.ImageField(upload_to='news/', verbose_name='Изображение',null=True, blank=True)
     date = models.DateField(verbose_name='Дата')
 
     def __str__(self):
@@ -281,6 +292,17 @@ class News(models.Model):
         verbose_name = 'Новость'
         verbose_name_plural = 'Новости'
 
+
+class NewsImage(models.Model):
+    news = models.ForeignKey(News, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='news/', verbose_name='Изображение')
+
+    def __str__(self):
+        return f"Фото для {self.news.title}"
+
+    class Meta:
+        verbose_name = 'Изображение новости'
+        verbose_name_plural = 'Изображения новостей'
 
 class BestMoments(models.Model):
     title = models.CharField(max_length=100, verbose_name='Заголовок')
@@ -294,6 +316,7 @@ class BestMoments(models.Model):
     class Meta:
         verbose_name = 'Лучшие моменты'
         verbose_name_plural = 'Лучшие моменты'
+
 
 class Sponsor(models.Model):
     name = models.CharField(max_length=100, verbose_name='Спонсор')
@@ -309,21 +332,38 @@ class Sponsor(models.Model):
 
 class CompanyInfo(models.Model):
     about = models.TextField(verbose_name="О нас")
-    documents = models.FileField(upload_to='documents/', verbose_name='Документы', null=True, blank=True)
-    management = models.TextField(verbose_name="Руководство")
-
-    address = models.CharField(max_length=255, verbose_name="Адрес")
-    phone = models.CharField(max_length=20, verbose_name="Телефон")
-    email = models.EmailField(verbose_name="Email")
-
-    facebook_link = models.URLField(verbose_name="Facebook", null=True, blank=True)
-    instagram_link = models.URLField(verbose_name="Instagram", null=True, blank=True)
-    tiktok_link = models.URLField(verbose_name="TikTok", null=True, blank=True)
-    youtube_link = models.URLField(verbose_name="YouTube", null=True, blank=True)
 
     def __str__(self):
         return "Информация о компании"
+
+    class Meta:
+        verbose_name = "Информация о компании"
+        verbose_name_plural = "Информация о компании"
     
+class Document(models.Model):
+    name = models.CharField(max_length=255, verbose_name="Название")
+    file = models.FileField(upload_to="documents/", verbose_name="Файл")
+
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        verbose_name = "Документ"
+        verbose_name_plural = "Документы"
+    
+
+class ManegementKfl(models.Model):
+    name = models.CharField(max_length=255, verbose_name="Имя")
+    position = models.CharField(max_length=255, verbose_name="Должность")
+    photo = models.ImageField(upload_to="management/", verbose_name="Фото", blank=True, null=True)
+    
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        verbose_name = "Руководство"
+        verbose_name_plural = "Руководство"
+
 
 class Judge(models.Model):
     name = models.CharField(max_length=255, verbose_name="Имя")
@@ -331,3 +371,7 @@ class Judge(models.Model):
     
     def __str__(self):
         return self.name
+    
+    class Meta:
+        verbose_name = "Судья"
+        verbose_name_plural = "Судьи"

@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import Teams, Management, Players, Season, Tournament, \
     Round, Matches, MatchLineup, EventsMathes, \
         StaticticsPlayerSeason, SeasonAwards, Standings, \
-            SiteSettings, News, BestMoments, Sponsor, CompanyInfo, Judge
+            SiteSettings, News, BestMoments, Sponsor, CompanyInfo, Judge, NewsImage, Document, ManegementKfl
 # Для модели Teams
 class TeamsAdmin(admin.ModelAdmin):
     list_display = ('id','name', 'city', 'stadium', 'coach', 'founded_year')
@@ -86,11 +86,17 @@ class SiteSettingsAdmin(admin.ModelAdmin):
     list_display = ('id','title', 'logo', 'favicon', 'facebook_link', 'instagram_link', 'tiktok_link', 'youtube_link', 'copy_right')
     search_fields = ('title',)
 
-# Для модели News
+
+class NewsImageInline(admin.TabularInline):  # Можно заменить на StackedInline для другого вида
+    model = NewsImage
+    extra = 3 
+
+
 class NewsAdmin(admin.ModelAdmin):
-    list_display = ('id','title', 'date', 'image')
+    list_display = ('id','title', 'date')
     search_fields = ('title', 'text')
     list_filter = ('date',)
+    inlines = [NewsImageInline]
 
 # Для модели BestMoments
 class BestMomentsAdmin(admin.ModelAdmin):
@@ -113,7 +119,17 @@ class SponsorAdmin(admin.ModelAdmin):
 
 @admin.register(CompanyInfo)
 class CompanyInfoAdmin(admin.ModelAdmin):
-    list_display = ('id','about', 'documents', 'management', 'address', 'phone', 'email', 'facebook_link', 'instagram_link', 'tiktok_link', 'youtube_link', )
+    list_display = ('id','about',)
+
+@admin.register(Document)
+class DocumentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'file')
+    search_fields = ('name',)
+
+@admin.register(ManegementKfl)
+class ManegementKflAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'position', 'photo')
+
 
 @admin.register(Judge)
 class JudgeAdmin(admin.ModelAdmin):

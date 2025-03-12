@@ -161,11 +161,6 @@ JAZZMIN_SETTINGS = {
     "site_header": "kfl",
     "site_brand": "kfl",
    
-    # Logo to use for your site, must be present in static files, used for brand on top left
-    "site_logo": "image/iwex_crm_logo.png",
-    # Logo to use for your site, must be present in static files, used for login form logo (defaults to site_logo)
-    "login_logo": "image/iwex_1.svg",
-   
     # Logo to use for login form in dark themes (defaults to login_logo)
     "login_logo_dark": None,
     # CSS classes that are applied to the logo above
@@ -176,6 +171,9 @@ JAZZMIN_SETTINGS = {
     "welcome_sign": "Добро пожаловать!",
     # Copyright on the footer
     "copyright": "kfl",
+    "order_with_respect_to": ["Players"],  # Убираем "Core", добавляем "Players"
+    
+    
     # List of model admins to search from the search bar, search bar omitted if excluded
     # If you want to use a single search field you dont need to use a list, you can use a simple string
     "search_model": ["auth.User", "auth.Group"],
@@ -187,53 +185,29 @@ JAZZMIN_SETTINGS = {
     # Whether to aut expand the menu
     "navigation_expanded": False,
     # Hide these apps when generating side menu e.g (auth)
-    "hide_apps": [],
-    # Hide these models when generating side menu (e.g auth.user)
-    "hide_models": [],
-    # List of apps (and/or models) to base side menu ordering off of (does not need to contain all apps/models)
-    "order_with_respect_to": ["auth", "books", "books.author", "books.book"],
-    # Custom links to append to app groups, keyed on app name
-    "custom_links": {
-        "books": [
-            {
-                "name": "Make Messages",
-                "url": "make_messages",
-                "icon": "fas fa-comments",
-                "permissions": ["books.view_book"],
-            }
-        ]
-    },
-    # Custom icons for side menu apps/models See https://fontawesome.com/icons?d=gallery&m=free&v=5.0.0,5.0.1,5.0.10,5.0.11,5.0.12,5.0.13,5.0.2,5.0.3,5.0.4,5.0.5,5.0.6,5.0.7,5.0.8,5.0.9,5.1.0,5.1.1,5.2.0,5.3.0,5.3.1,5.4.0,5.4.1,5.4.2,5.13.0,5.12.0,5.11.2,5.11.1,5.10.0,5.9.0,5.8.2,5.8.1,5.7.2,5.7.1,5.7.0,5.6.3,5.5.0,5.4.2
-    # for the full list of 5.13.0 free icon classes
-    "icons": {
-        "auth": "fas fa-users-cog",
-        "auth.user": "fas fa-user",
-        "auth.Group": "fas fa-users",
-        "admin.LogEntry": "fas fa-file",
-        "admin": "fas fa-user-cog",
-        "authtoken": "fas fa-key",
-        "UserVisitAppConfig": "fas fa-book", 
-        "Accounts": "fas fa-user",
-        "Accounts.Payment": "fas fa-credit-card",
-        "Accounts.User": "fas fa-users",
-        "Accounts.Profile": "fas fa-address-card",
-        "Accounts.Rating":"fas fa-star",
-        "Accounts.Review":"fas fa-pen-alt",
-        "Accounts.WorkExperience":"fas fa-briefcase",
-        "Chat": "fas fa-comments",
-        "Chat.Chat": "fas fa-comment-dots",
-        "Core": "fas fa-globe",
-        "Core.Vacancy": "fas fa-suitcase",
-        "Core.EmployerCompany": "fas fa-users",
-        "Core.Housing":"fas fa-home",
-        "Core.Branch":"fas fa-code-branch",
-        "Core.Invitation":"fas fa-handshake",
-        "Core.Favorite":"fas fa-heart",
-        "Core.Interviews":"fas fa-calendar-alt",
-        "Staff": "fas fa-user-tie",
-        "Staff.Notification": "fas fa-bell",
 
-       
+    "order_with_respect_to": ["Игроки", "Компания", "Матчи"],
+    "custom_apps": {
+        "Игроки": {
+            "models": ["core.Judge", "core.Player"]
+        },
+        "Компания": {
+            "models": ["core.CompanyInfo"]
+        },
+        "Матчи": {
+            "models": ["core.Team", "core.Season"]
+        }
+    },  
+
+    "custom_links": {},  # Оставляем пустым, чтобы не мешалось
+
+    "icons": {
+        "Players": "fas fa-users",
+        "Matches": "fas fa-futbol",
+        "core.Judge": "fas fa-user-tie",
+        "core.Player": "fas fa-user",
+        "core.Teams": "fas fa-users",
+        "core.Season": "fas fa-calendar",
     },
     # Icons that are used when one is not manually specified
     "default_icon_parents": "fas fa-chevron-circle-right",
