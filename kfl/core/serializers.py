@@ -108,7 +108,7 @@ class EventsMathesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EventsMathes
-        fields = ['id', 'match_info', 'player_name', 'player_team_id','player_team_name','event', 'time', 'documents']
+        fields = ['id', 'match_info', 'player_name', 'player_team_id','player_team_name','event', 'time',]
 
     def get_player_name(self, obj):
         return f"{obj.player.first_name} {obj.player.last_name}"
