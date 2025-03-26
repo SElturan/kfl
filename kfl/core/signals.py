@@ -6,22 +6,28 @@ from .models import EventsMathes, Matches, Standings, StaticticsPlayerSeason, Ev
 # Обновление статистики игроков при добавлении события матча (голы, карточки и т.д.)
 @receiver(post_save, sender=EventsMathes)
 def update_player_statistics(sender, instance, created, **kwargs):
-    if created:
-        player_stats, _ = StaticticsPlayerSeason.objects.get_or_create(
-            player=instance.player,
-            tournament=instance.match.tournament,
-            season=instance.match.season
-        )
+    if not created:  
+        return  # Если событие не новое, выходим
 
-        if instance.event == "Гол":
-            player_stats.goals += 1
-        elif instance.event == "Пас":
-            player_stats.assists += 1
-        elif instance.event == "Желтая карточка":
-            player_stats.yellow_cards += 1
-        elif instance.event == "Красная карточка":
-            player_stats.red_cards += 1
+    # Получаем или создаем запись статистики игрока
+    player_stats, created = StaticticsPlayerSeason.objects.get_or_create(
+        player=instance.player,
+        tournament=instance.match.tournament,
+        season=instance.match.season,
+        defaults={'goals': 0, 'assists': 0, 'yellow_cards': 0, 'red_cards': 0, 'games': 0}
+    )
 
+    # Обновляем соответствующее поле в зависимости от типа события
+    event_mapping = {
+        EventsMathes.EventChoices.GOAL: "goals",
+        EventsMathes.EventChoices.ASSIST: "assists",
+        EventsMathes.EventChoices.YELLOW_CARD: "yellow_cards",
+        EventsMathes.EventChoices.RED_CARD: "red_cards",
+    }
+
+    if instance.event in event_mapping:
+        field_name = event_mapping[instance.event]
+        setattr(player_stats, field_name, getattr(player_stats, field_name) + 1)
         player_stats.save()
 
 
@@ -90,9 +96,37 @@ def update_match_score(sender, instance, created, **kwargs):
 
         match.save()  # Сохраняем обновленный счет
 
-@receiver(pre_save, sender=Matches)
+@receiver(post_save, sender=Matches)
 def update_match_status(sender, instance, **kwargs):
-    # Если статус еще не обновлен и время матча уже прошло
-    if instance.status == 'Не начался' and instance.date_match <= timezone.now().date():
-        if instance.time_match <= timezone.now().time():
-            instance.status = 'В процессе'
+    now = timezone.localtime(timezone.now())  # Учитываем локальное время
+    match_datetime = timezone.make_aware(
+        timezone.datetime.combine(instance.date_match, instance.time_match)
+    )  # Создаем объект даты-времени матча
+
+    print(f"Проверка матча {instance.id} | Дата: {instance.date_match}, Время: {instance.time_match} | Сейчас: {now}")
+
+    # Проверяем, если матч должен был начаться, но статус не изменился
+    if instance.status == 'Не начался' and now >= match_datetime:
+        instance.status = 'В процессе'
+        instance.save(update_fields=['status'])  # Обновляем только статус
+        print(f"✅ Статус матча {instance.id} изменен на 'В процессе'")
+
+
+@receiver(post_save, sender=EventsMathes)
+def handle_yellow_cards(sender, instance, created, **kwargs):
+    # Проверяем, что событие - желтая карточка
+    if instance.event == EventsMathes.EventChoices.YELLOW_CARD:
+        # Получаем все события для этого игрока в текущем матче
+        events = EventsMathes.objects.filter(player=instance.player, match=instance.match)
+
+        # Считаем количество желтых карточек
+        yellow_count = events.filter(event=EventsMathes.EventChoices.YELLOW_CARD).count()
+
+        if yellow_count == 2:  # Если 2 желтые карточки
+            # Создаем красную карточку
+            EventsMathes.objects.create(
+                match=instance.match,
+                player=instance.player,
+                event=EventsMathes.EventChoices.RED_CARD,
+                time=instance.time  # или другое время, как нужно
+            )

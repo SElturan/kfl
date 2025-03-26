@@ -11,11 +11,13 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework.filters import OrderingFilter
 from rest_framework import filters, generics, status, viewsets, mixins
 from .models import Teams, Season,Players, Management ,StaticticsPlayerSeason , \
-SeasonAwards,Standings, Matches, EventsMathes, SiteSettings, News, BestMoments, MatchLineup, Season, Tournament, Round, Sponsor, CompanyInfo, Judge
+SeasonAwards,Standings, Matches, EventsMathes, SiteSettings, News, BestMoments, MatchLineup, Season, Tournament, Round, Sponsor, CompanyInfo, Judge, \
+NewsImage, Document, ManegementKfl, Stadium
 from django.db.models import Q, Case, When, Value, IntegerField
 from .serializers import TeamsSerializer, ManagementSerializer,StaticticsPlayerSeasonSerializer ,TeamsDetailSerializer, PlayersSerializer, StandingsSerializer, PlayerDetailSerializer, MatchesSerializer, EventsMathesSerializer, SiteSettingsSerializer, NewsSerializer, \
     BestMomentsSerializer, MatchDetailSerializer,MatchLineupSerializer, SeasonAwardsSerializer, \
-        SeasonSerializer, TournamentSerializer, RoundSerializer, SponsorSerializer, CompanyInfoSerializer, JudgeSerializer
+        SeasonSerializer, TournamentSerializer, RoundSerializer, SponsorSerializer, CompanyInfoSerializer, JudgeSerializer, \
+        NewsImageSerializer, DocumentSerializer, ManegementKflSerializer, NewsDetailSerializer, StadiumSerializer
 from django.utils.timezone import now
 from .pagination import StandardResultsSetPagination
 
@@ -97,43 +99,70 @@ class StandingsListView(ListAPIView):
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_fields = ['season__year', 'tournament']
 
+    # Укажи вручную нужный турнир
+    DEFAULT_TOURNAMENT_NAME = "Премьер-лига"
+
     def get_queryset(self):
         standings = Standings.objects.select_related('team', 'tournament')
 
+        # Вычисляем разницу мячей
         for standing in standings:
             standing.goals_difference = standing.goals_scored - standing.goals_conceded
             standing.save()
 
-        return standings.order_by('-points', '-goals_difference')
+        # Сортировка по очкам, разнице мячей, забитым голам и победам
+        return standings.order_by(
+            '-points', 
+            '-goals_difference', 
+            '-goals_scored', 
+            '-wins'
+        )
 
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
+
+        # Получаем текущий сезон
+        current_season = Season.objects.filter(is_current=True).first()
+
+        # Получаем ID турнира по названию
+        default_tournament = Tournament.objects.filter(name=self.DEFAULT_TOURNAMENT_NAME).first()
+
+        # Проверяем, переданы ли параметры в запросе
         season_year = request.query_params.get("season__year")
         tournament_id = request.query_params.get("tournament")
-        top_scorers = StaticticsPlayerSeason.objects.all().select_related('player')
-        
-        if season_year and tournament_id:
-            top_scorers = top_scorers.filter(season__year=season_year, tournament=tournament_id)
-        
-        top_scorers = top_scorers.order_by('-goals')[:3]
 
+        # Если параметры не переданы, устанавливаем значения по умолчанию
+        if not season_year and current_season:
+            season_year = current_season.year
+
+        if not tournament_id and default_tournament:
+            tournament_id = default_tournament.id
+
+        # Фильтруем бомбардиров по указанным или дефолтным данным
+        top_scorers = StaticticsPlayerSeason.objects.filter(
+            season__year=season_year, 
+            tournament=tournament_id
+        ).select_related('player').order_by('-goals')[:3]
+
+        # Формируем ответ с топ-голеадорами
         response.data = {
             "standings": response.data,
             "top_scorers": [
-                {   "id": scorer.player.id,
+                {   
+                    "id": scorer.player.id,
                     "player_photo": scorer.player.photo.url if scorer.player.photo else None,
                     "player": f"{scorer.player.first_name} {scorer.player.last_name}",
                     "number": scorer.player.number,
                     "goals": scorer.goals,
                     "team": scorer.player.team.name if scorer.player.team else None,
                     "team_logo": scorer.player.team.logo.url if scorer.player.team.logo else None,
-                    
                 }
                 for scorer in top_scorers
             ]
         }
         
         return Response(response.data)
+
 
 class TeamMatchesView(ListAPIView):
     serializer_class = MatchesSerializer
@@ -176,44 +205,7 @@ class MatchListView(ListAPIView):
     filterset_fields = ['season__year', 'tournament', 'round']
     ordering_fields = ['date_match']
     ordering = ['date_match']
-
-    def get_queryset(self):
-        # Начинаем с фильтрации матчей по запросу пользователя
-        queryset = Matches.objects.all()
-
-        # Применяем фильтрацию и сортировку через Django ORM
-        queryset = self.filter_queryset(queryset)
-
-        # Получаем общее количество команд в турнире
-        total_teams = Teams.objects.count()
-
-        # Определяем количество матчей (половина от общего числа команд)
-        max_matches = total_teams // 2
-
-        # Хранение уже добавленных команд
-        added_teams = set()
-        matches_list = []
-
-        # Применяем логику для ограничения матчей
-        for match in queryset:
-            if match.home_team.id not in added_teams and match.away_team.id not in added_teams:
-                matches_list.append(match)
-                added_teams.add(match.home_team.id)
-                added_teams.add(match.away_team.id)
-
-                # Ограничиваем количество матчей
-                if len(matches_list) >= max_matches:
-                    break
-
-        return matches_list
-
-    def list(self, request, *args, **kwargs):
-        # Получаем отфильтрованный и ограниченный список матчей
-        queryset = self.get_queryset()
-
-        # Сериализуем данные
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+    queryset = Matches.objects.all()
 
 class MatchLineupListView(ListAPIView):
     serializer_class = MatchLineupSerializer
@@ -238,7 +230,7 @@ class MatchLineupListView(ListAPIView):
         return Response({
             "match": f"{match.home_team.name} vs {match.away_team.name}",
             "date": match.date_match,
-            "stadium": match.stadium,
+            "stadium": match.stadium.name,
             "status": match.status,
             "home_goals": match.home_goals,
             "away_goals": match.away_goals,
@@ -352,6 +344,9 @@ class SiteDataListAPIView(ListAPIView):
         upcoming_matches = Matches.objects.filter(date_match__gte=timezone.now().date()).order_by('date_match')[:10]
         matches_data = MatchesSerializer(upcoming_matches, many=True, context={'request': request}).data
 
+        clubs = Teams.objects.all().order_by('name')
+        clubs_data = TeamsSerializer(clubs, many=True, context={'request': request}).data
+
         # Все спонсоры
         sponsors = Sponsor.objects.all()
         sponsors_data = SponsorSerializer(sponsors, many=True, context={'request': request}).data
@@ -365,6 +360,7 @@ class SiteDataListAPIView(ListAPIView):
             "tiktok": site_data.get("tiktok_link", ""),
             "youtube": site_data.get("youtube_link", ""),
             "copyright": site_data.get("copy_right", ""),
+            "clubs": clubs_data,
             "upcoming_matches": matches_data,
             "news": news_data,
             "best_moments": moments_data,
@@ -452,7 +448,7 @@ class NewsListView(ListAPIView):
 
 class NewsDetailView(RetrieveAPIView):
     queryset = News.objects.all()
-    serializer_class = NewsSerializer
+    serializer_class = NewsDetailSerializer
 
 class BestMomentsListView(ListAPIView):
     queryset = BestMoments.objects.all().order_by('-date')
@@ -465,6 +461,18 @@ class CompanyInfoListView(ListAPIView):
     queryset = CompanyInfo.objects.all()
     serializer_class = CompanyInfoSerializer
 
+class DocumentListView(ListAPIView):
+    queryset = Document.objects.all()
+    serializer_class = DocumentSerializer
+
+class ManegementKflListView(ListAPIView):
+    queryset = ManegementKfl.objects.all()
+    serializer_class = ManegementKflSerializer
+
 class JudgeListView(ListAPIView):
     queryset = Judge.objects.all()
     serializer_class = JudgeSerializer
+
+class StadiumListView(ListAPIView):
+    queryset = Stadium.objects.all()
+    serializer_class = StadiumSerializer

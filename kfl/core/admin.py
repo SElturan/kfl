@@ -2,12 +2,29 @@ from django.contrib import admin
 from .models import Teams, Management, Players, Season, Tournament, \
     Round, Matches, MatchLineup, EventsMathes, \
         StaticticsPlayerSeason, SeasonAwards, Standings, \
-            SiteSettings, News, BestMoments, Sponsor, CompanyInfo, Judge
-# Для модели Teams
+            SiteSettings, News, BestMoments, Sponsor, CompanyInfo, Judge, NewsImage, Document, ManegementKfl, Stadium
+
+class ManagementInline(admin.TabularInline):
+    model = Management
+    extra = 1  # Количество пустых строк для добавления новых записей
+
+# Inline для игроков (Players)
+class PlayersInline(admin.TabularInline):
+    model = Players
+    extra = 1
+
+# Inline для турнирных таблиц (Standings)
+class StandingsInline(admin.TabularInline):
+    model = Standings
+    extra = 1
+
+# Расширенный админ-класс для команд
+
 class TeamsAdmin(admin.ModelAdmin):
-    list_display = ('id','name', 'city', 'stadium', 'coach', 'founded_year')
+    list_display = ('id', 'name', 'city', 'stadium', 'coach', 'founded_year')
     search_fields = ('name', 'city')
     list_filter = ('city',)
+    inlines = [ManagementInline, PlayersInline, StandingsInline]  
 
 # Для модели Management
 class ManagementAdmin(admin.ModelAdmin):
@@ -39,11 +56,23 @@ class RoundAdmin(admin.ModelAdmin):
     search_fields = ('tournament__name', 'season__year')
     list_filter = ('tournament', 'season')
 
-# Для модели Matches
+class StadiumAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'city', 'capacity')
+
+class MatchLineupInline(admin.TabularInline):
+    model = MatchLineup
+    extra = 1
+
+# Inline для событий матча
+class EventsMatchesInline(admin.TabularInline):
+    model = EventsMathes
+    extra = 1
+
 class MatchesAdmin(admin.ModelAdmin):
     list_display = ('id','tournament', 'season', 'home_team', 'away_team', 'date_match','time_match', 'status', 'home_goals', 'away_goals', 'stadium', 'documents')
     search_fields = ('tournament__name', 'home_team__name', 'away_team__name')
     list_filter = ('tournament', 'season', 'status', 'home_team', 'away_team')
+    inlines = [MatchLineupInline, EventsMatchesInline]
 
 # Для модели MatchLineup
 class MatchLineupAdmin(admin.ModelAdmin):
@@ -86,11 +115,17 @@ class SiteSettingsAdmin(admin.ModelAdmin):
     list_display = ('id','title', 'logo', 'favicon', 'facebook_link', 'instagram_link', 'tiktok_link', 'youtube_link', 'copy_right')
     search_fields = ('title',)
 
-# Для модели News
+
+class NewsImageInline(admin.TabularInline):  # Можно заменить на StackedInline для другого вида
+    model = NewsImage
+    extra = 3 
+
+
 class NewsAdmin(admin.ModelAdmin):
-    list_display = ('id','title', 'date', 'image')
+    list_display = ('id','title', 'date')
     search_fields = ('title', 'text')
     list_filter = ('date',)
+    inlines = [NewsImageInline]
 
 # Для модели BestMoments
 class BestMomentsAdmin(admin.ModelAdmin):
@@ -113,7 +148,17 @@ class SponsorAdmin(admin.ModelAdmin):
 
 @admin.register(CompanyInfo)
 class CompanyInfoAdmin(admin.ModelAdmin):
-    list_display = ('id','about', 'documents', 'management', 'address', 'phone', 'email', 'facebook_link', 'instagram_link', 'tiktok_link', 'youtube_link', )
+    list_display = ('id','about',)
+
+@admin.register(Document)
+class DocumentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'file')
+    search_fields = ('name',)
+
+@admin.register(ManegementKfl)
+class ManegementKflAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'position', 'photo')
+
 
 @admin.register(Judge)
 class JudgeAdmin(admin.ModelAdmin):
@@ -128,11 +173,11 @@ admin.site.register(Players, PlayersAdmin)
 admin.site.register(Season, SeasonAdmin)
 admin.site.register(Tournament, TournamentAdmin)
 admin.site.register(Round, RoundAdmin)
+admin.site.register(Stadium, StadiumAdmin)
 admin.site.register(Matches, MatchesAdmin)
 admin.site.register(MatchLineup, MatchLineupAdmin)
 admin.site.register(EventsMathes, EventsMathesAdmin)
 admin.site.register(StaticticsPlayerSeason, StaticticsPlayerSeasonAdmin)
-admin.site.register(SeasonAwards, SeasonAwardsAdmin)
 admin.site.register(Standings, StandingsAdmin)
 admin.site.register(SiteSettings, SiteSettingsAdmin)
 admin.site.register(News, NewsAdmin)
