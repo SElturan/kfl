@@ -156,6 +156,11 @@ CORS_ORIGIN_WHITELIST = [
     'http://172.18.0.1:8001',
 ]
 
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # или другой брокер сообщений
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+
+
 JAZZMIN_SETTINGS = {
     "site_title": "kfl",
     "site_header": "kfl",
