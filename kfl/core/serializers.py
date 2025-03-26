@@ -3,7 +3,7 @@ from .models import Teams,Management ,Players, \
 SeasonAwards,Standings, Matches, EventsMathes, \
 StaticticsPlayerSeason, SiteSettings, News, \
 BestMoments, MatchLineup, Season, Tournament, Round, Sponsor\
-,CompanyInfo, Judge, NewsImage, Document, ManegementKfl
+,CompanyInfo, Judge, NewsImage, Document, ManegementKfl, Stadium
 
 
 class TeamsSerializer(serializers.ModelSerializer):
@@ -43,6 +43,11 @@ class RoundSerializer(serializers.ModelSerializer):
         model = Round
         fields = ['id', 'tournament_name', 'season_year', 'round_number']
 
+class StadiumSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Stadium
+        fields = ['id', 'name', 'city', 'capacity', 'adress']
+
 class PlayersSerializer(serializers.ModelSerializer):
     class Meta:
         model = Players
@@ -67,6 +72,7 @@ class PlayerDetailSerializer(serializers.ModelSerializer):
 
 
 class StandingsSerializer(serializers.ModelSerializer):
+    team_id = serializers.IntegerField(source='team.id', read_only=True)
     team_name = serializers.CharField(source='team.name', read_only=True)
     team_logo = serializers.CharField(source='team.logo', read_only=True)
     season = serializers.CharField(source='season.year', read_only=True)
@@ -75,7 +81,7 @@ class StandingsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Standings
-        fields = ['id', 'tournament', 'season', 'team_name', 'team_logo', 'season', 'games', 'wins', 'draws', 'losses', 'goals_scored', 'goals_conceded', 'calculated_goals_difference','points']
+        fields = ['id', 'tournament', 'season','team_id', 'team_name', 'team_logo', 'season', 'games', 'wins', 'draws', 'losses', 'goals_scored', 'goals_conceded', 'calculated_goals_difference','points']
 
 
 class MatchesSerializer(serializers.ModelSerializer):
@@ -86,10 +92,11 @@ class MatchesSerializer(serializers.ModelSerializer):
     tournament_name = serializers.CharField(source='tournament.name', read_only=True)
     season_year = serializers.CharField(source='season.year', read_only=True)
     round_number = serializers.CharField(source='round.round_number',read_only=True)
+    stadium = serializers.CharField(source='stadium.name')
 
     class Meta:
         model = Matches
-        fields = ['id','tournament_name', 'season_year', 'round_number', 'home_team_logo', 'away_team_logo', 'home_team_name', 'away_team_name', 'date_match','time_match','home_goals', 'away_goals', 'stadium', 'status', 'mvp', 'documents']
+        fields = ['id','tournament_name', 'season_year', 'round_number', 'home_team_logo', 'away_team_logo', 'home_team_name', 'away_team_name', 'date_match','time_match','home_goals', 'away_goals', 'stadium', 'status', 'mvp', 'documents','technical_defeat']
 
 class MatchLineupSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
@@ -127,11 +134,12 @@ class MatchDetailSerializer(serializers.ModelSerializer):
     away_team = serializers.CharField(source='away_team.name')
     home_team_logo = serializers.CharField(source='home_team.logo', read_only=True)
     away_team_logo = serializers.CharField(source='away_team.logo', read_only=True)
+    stadium = serializers.CharField(source='stadium.name')
     events = serializers.SerializerMethodField()
 
     class Meta:
         model = Matches
-        fields = ['id', 'home_team_logo', 'away_team_logo', 'home_team', 'away_team', 'home_goals','away_goals' ,'date_match', 'time_match','events', 'documents']
+        fields = ['id', 'home_team_logo', 'away_team_logo', 'home_team', 'away_team', 'home_goals','away_goals' ,'date_match', 'time_match','events', 'stadium','documents','technical_defeat']
 
 
     def get_events(self, obj):
@@ -139,7 +147,8 @@ class MatchDetailSerializer(serializers.ModelSerializer):
         return EventsMathesSerializer(events, many=True).data
 
 class StaticticsPlayerSeasonSerializer(serializers.ModelSerializer):
-    player_name = serializers.CharField(source="player.__str__")
+    player_id = serializers.IntegerField(source="player.id")
+    player_name = serializers.SerializerMethodField()
     player_photo = serializers.CharField(source="player.photo")
     team = serializers.CharField(source='player.team.name', read_only=True)
     team_logo = serializers.CharField(source='player.team.logo', read_only=True)
@@ -150,6 +159,7 @@ class StaticticsPlayerSeasonSerializer(serializers.ModelSerializer):
         model = StaticticsPlayerSeason
         fields = [
             'id',
+            'player_id',
             'player_name',
             'player_photo',
             'team',
@@ -163,6 +173,9 @@ class StaticticsPlayerSeasonSerializer(serializers.ModelSerializer):
             'games',
             'minutes'
         ]
+    
+    def get_player_name(self, obj):
+        return f"{obj.player.first_name} {obj.player.last_name}"
 
 class SeasonAwardsSerializer(serializers.ModelSerializer):
     best_scorer = PlayersSerializer(read_only=True)
@@ -190,12 +203,25 @@ class NewsImageSerializer(serializers.ModelSerializer):
         model = NewsImage
         fields = ['id', 'image']
 
-class NewsSerializer(serializers.ModelSerializer):
+
+
+class NewsDetailSerializer(serializers.ModelSerializer):
     images = NewsImageSerializer(many=True, read_only=True)
 
     class Meta:
         model = News
         fields = ['id', 'title', 'text', 'date', 'images']
+
+class NewsSerializer(serializers.ModelSerializer):
+    images = serializers.SerializerMethodField()
+
+    class Meta:
+        model = News
+        fields = ['id', 'title', 'text', 'date', 'images']
+
+    def get_images(self, obj):
+        first_image = obj.images.first()
+        return first_image.image.url if first_image else None
 
 
 class BestMomentsSerializer(serializers.ModelSerializer):
@@ -213,20 +239,20 @@ class SponsorSerializer(serializers.ModelSerializer):
 class CompanyInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompanyInfo
-        fields = '__all__'
+        fields = ['id', 'about']
 
 class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
-        fields = '__all__'
+        fields = ['id','name', 'file']
 
 class ManegementKflSerializer(serializers.ModelSerializer):
     class Meta:
         model = ManegementKfl
-        fields = '__all__'
+        fields = ['id', 'name', 'photo', 'position']
 
 
 class JudgeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Judge
-        fields = '__all__'
+        fields = ['id','name', 'photo']

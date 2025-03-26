@@ -1,4 +1,5 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
 from django.db import models
 
 class Teams(models.Model):
@@ -83,6 +84,15 @@ class Season(models.Model):
     start_date = models.DateField(verbose_name="Дата начала")
     end_date = models.DateField(verbose_name="Дата окончания")
 
+    def save(self, *args, **kwargs):
+        if self.is_current:
+            # Проверяем, есть ли уже текущий сезон, кроме самого себя (при редактировании)
+            current_season = Season.objects.filter(is_current=True).exclude(id=self.id).first()
+            if current_season:
+                raise ValidationError("Уже есть текущий сезон. Отключите его перед установкой нового.")
+        
+        super().save(*args, **kwargs)  # Сохраняем, если всё нормально
+
     def __str__(self):
         return f"{self.year}"
 
@@ -109,6 +119,7 @@ class Stadium(models.Model):
     name = models.CharField(max_length=100, verbose_name='Название стадиона')
     city = models.CharField(max_length=100, verbose_name='Город')
     capacity = models.IntegerField(verbose_name='Вместимость')
+    adress = models.CharField(null=True, blank=True, verbose_name='Адрес')
 
     def __str__(self):
         return self.name
@@ -128,7 +139,8 @@ class Matches(models.Model):
     time_match = models.TimeField(verbose_name='Время матча', null=True, blank=True)
     home_goals = models.IntegerField(verbose_name='Голы хозяев', null=True, blank=True)
     away_goals = models.IntegerField(verbose_name='Голы гостей', null=True, blank=True)
-    stadium = models.CharField(max_length=100, verbose_name='Стадион', null=True, blank=True)
+    stadium = models.ForeignKey(Stadium, on_delete=models.CASCADE, verbose_name="Стадион", related_name="matches")
+    technical_defeat = models.BooleanField(default=False, verbose_name='Техническое поражение')
     status = models.CharField(
         max_length=100,
         choices=[
@@ -136,7 +148,7 @@ class Matches(models.Model):
             ('В процессе', 'В процессе'),
             ('Закончен', 'Закончен')
         ],
-        verbose_name='Статус'
+        verbose_name='Статус', default='Не начался', null=True, blank=True
     )
     mvp = models.ForeignKey(Players, on_delete=models.CASCADE, verbose_name='Лучший игрок', null=True, blank=True)
     documents = models.FileField(upload_to='documents/', verbose_name='Документы', null=True, blank=True)
@@ -200,8 +212,8 @@ class StaticticsPlayerSeason(models.Model):
     assists = models.IntegerField(verbose_name='Пасы')
     yellow_cards = models.IntegerField(verbose_name='Желтые карточки')
     red_cards = models.IntegerField(verbose_name='Красные карточки')
-    games = models.IntegerField(verbose_name='Игры')
-    minutes = models.IntegerField(verbose_name='Минуты')
+    games = models.IntegerField(verbose_name='Игры',null=True, blank=True)
+    minutes = models.IntegerField(verbose_name='Минуты',null=True, blank=True)
 
     def __str__(self):
         return f"{self.player.first_name} {self.player.last_name} - {self.tournament.name} {self.season.year}"
