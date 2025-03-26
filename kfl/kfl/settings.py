@@ -157,7 +157,7 @@ CORS_ORIGIN_WHITELIST = [
 ]
 
 # settings.py
-CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+CELERY_BROKER_URL = 'redis://redis:6379/0'
   # используем Redis в качестве брокера
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
