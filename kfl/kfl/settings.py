@@ -149,11 +149,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_WHITELIST = [
-    'http://localhost:8000',
-    'http://0:0:0:0:8000',
-    'http://172.18.0.1:8001',
+CSRF_TRUSTED_ORIGINS = [
+    "https://back.kpfl.kg",
+    "https://www.back.kpfl.kg"  # если есть поддомен www
 ]
+
 
 # settings.py
 CELERY_BROKER_URL = 'redis://redis:6379/0'
