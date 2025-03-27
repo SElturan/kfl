@@ -45,9 +45,6 @@ INSTALLED_APPS = [
     'drf_spectacular_sidecar',  # required for Django collectstatic discovery
     'django_filters',
     'phonenumber_field',
-
-    # apps
-    'corsheaders',
     'core.apps.CoreConfig',
     'accounts.apps.AccountsConfig',
 ]
